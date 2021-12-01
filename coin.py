@@ -8,7 +8,7 @@ import requests
 from uuid import uuid4
 from urllib.parse import urlparse
 
-# Build the blockchain
+# Part 1: Build the blockchain
 class Blockchain:
 
   def __init__(self):
@@ -108,10 +108,13 @@ class Blockchain:
 
     return False
 
-# Mining the blockchain
+# Part 2: Mining the blockchain
 
 # Create web app
 app = Flask(__name__)
+
+# Creating an address for the node on PORT 5000
+node_address = str(uuid4()).replace('-', '')
 
 # Create a blockchain
 blockchain = Blockchain()
@@ -123,14 +126,16 @@ def mine_block():
   previous_proof = previous_block['proof']
   proof = blockchain.proof_of_work(previous_proof)
   previous_hash = blockchain.hash(previous_block)
+  blockchain.add_transaction(sender = node_address, receiver = 'Stan', amount = 10)
 
   block = blockchain.create_block(proof, previous_hash)
   response = {
-    'message': 'COngrats! You mined a block!',
+    'message': 'Congrats! You mined a block!',
     'index': block['index'],
     'timestamp': block['timestamp'],
     'proof': block['proof'],
     'previous_hash': block['previous_hash'],
+    'transactions': block['transactions']
   }
 
   return jsonify(response), 200
@@ -153,19 +158,22 @@ def is_valid():
     resp = {'message': 'Block is valid!'}
   else:
     resp = {'message': 'Block is not valid :('}
-
-
-
   return jsonify(resp), 200
 
-# Decentralizing the blockchain
+# Adding a new transaction to the blockchain
+@app.route('/add_transaction', methods=['POST'])
+def add_transaction():
+  json = request.get_json()
+  transaction_keys = ['sender', 'receiver', 'amount']
+
+  if not all (key in json for key in transaction_keys):
+    return 'Some elements for the transaction are missing', 400
+
+  index = blockchain.add_transaction(json['sender'], json['receiver'], json['amount'])
+  response = {'message': f'This transaction will be added to Block {index}'}
+  return jsonify(response), 201
+
+# Part 3: Decentralizing the blockchain
 
 # Run the app
 app.run(host = '0.0.0.0', port = 5000)
-
-
-
-
-
-
-
